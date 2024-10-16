@@ -8,9 +8,9 @@ CREATE PROCEDURE ComputeAverageWeightedScoreForUser (
     IN user_id INT
 )
 BEGIN
-    DECLARE total_weighted_score DECIMAL(10, 2) DEFAULT 0;
+    DECLARE total_weighted_score INT DEFAULT 0;
     DECLARE total_weight INT DEFAULT 0;
-    DECLARE avg_weighted_score DECIMAL(10, 2);
+    DECLARE avg_weighted_score Float;
 
     -- Calculate the total weighted score and total weight for the user's projects
     SELECT SUM(c.score * p.weight), SUM(p.weight)
