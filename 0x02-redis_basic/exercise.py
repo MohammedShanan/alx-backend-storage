@@ -6,6 +6,39 @@ providing functionality to store, retrieve, and track the usage of data.
 import redis
 import uuid
 from typing import Any, Callable, Union
+from functools import wraps
+
+
+def count_calls(method: Callable) -> Callable:
+    """
+    Decorator that counts the number of times a method of
+    the Cache class is called.
+
+    Args:
+        method (Callable): The method to be decorated.
+
+    Returns:
+        Callable: The wrapped method with call counting functionality.
+    """
+
+    @wraps(method)
+    def invoker(self, *args, **kwargs) -> Any:
+        """
+        Wraps the method to increment its call counter and then execute it.
+
+        Args:
+            self: The instance of the Cache class.
+            *args: Positional arguments passed to the method.
+            **kwargs: Keyword arguments passed to the method.
+
+        Returns:
+            Any: The result of the decorated method.
+        """
+        if isinstance(self._redis, redis.Redis):
+            self._redis.incr(method.__qualname__)
+        return method(self, *args, **kwargs)
+
+    return invoker
 
 
 class Cache:
@@ -22,6 +55,7 @@ class Cache:
         self._redis = redis.Redis()
         self._redis.flushdb(True)
 
+    @count_calls
     def store(self, data: Union[str, bytes, int, float]) -> str:
         """
         Stores a value in the Redis data store and returns a unique key.
