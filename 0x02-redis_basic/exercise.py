@@ -41,6 +41,43 @@ def count_calls(method: Callable) -> Callable:
     return invoker
 
 
+def call_history(method: Callable) -> Callable:
+    """
+    Decorator that records the history of inputs and
+    outputs for a method of the Cache class.
+
+    Args:
+        method (Callable): The method to be decorated.
+
+    Returns:
+        Callable: The wrapped method with call history tracking functionality.
+    """
+
+    @wraps(method)
+    def invoker(self, *args, **kwargs) -> Any:
+        """
+        Wraps the method to log its inputs and outputs in Redis.
+
+        Args:
+            self: The instance of the Cache class.
+            *args: Positional arguments passed to the method.
+            **kwargs: Keyword arguments passed to the method.
+
+        Returns:
+            Any: The result of the decorated method.
+        """
+        in_key = "{}:inputs".format(method.__qualname__)
+        out_key = "{}:outputs".format(method.__qualname__)
+        if isinstance(self._redis, redis.Redis):
+            self._redis.rpush(in_key, str(args))
+        output = method(self, *args, **kwargs)
+        if isinstance(self._redis, redis.Redis):
+            self._redis.rpush(out_key, output)
+        return output
+
+    return invoker
+
+
 class Cache:
     """
     A class for interacting with a Redis data store,
